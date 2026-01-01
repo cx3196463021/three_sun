@@ -1,0 +1,2011 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>股票程序提醒</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+<!--上方按钮和参数-->
+<div class="above">
+    <button class="start_button"><span>开始</span></button>
+    <button class="end_button"><span>结束</span></button>
+    <div class="input-group">
+        <span class="scrapt_time_text">爬取间隔(秒)</span>
+        <input type="number" class="scrapt_time" value="5">
+    </div>
+
+    <div class="input-group">
+        <input type="checkbox" class="checkbox" checked>
+        <span class="sun_day_text">阳天数</span>
+        <input type="number" class="sun_day" value="1">
+    </div>
+    <div class="time">
+        <input type="number" class="preview" value="3">
+        <span class="hypen">——</span>
+        <input type="number" class="back" value="21">
+    </div>
+    <div class="sound-duration">
+        <span class="sound-duration-text">声音(s)</span>
+        <input type="number" class="sound-duration-input" id="soundDurationInput" value="2" min="1" max="10">
+    </div>
+    <div class="total-limit-up-filter">
+        <input type="checkbox" class="total-limit-up-check">
+        <span class="total-limit-up-text">总涨停数</span>
+        <input type="number" class="total-limit-up-input" value="1">
+    </div>
+    <div class="yesterday-negative">
+        <input type="checkbox" class="yesterday-negative-check">
+        <span class="yesterday-negative-text">昨天阴</span>
+    </div>
+    <div class="prev-days-positive">
+        <input type="checkbox" class="prev-days-positive-check">
+        <span class="prev-days-positive-text">前</span>
+        <input type="number" class="prev-days-positive-input" value="3" min="1" max="10">
+        <span class="prev-days-positive-text2">天阳</span>
+    </div>
+    <div class="percent_up_to">
+        <input type="checkbox" class="up_check">
+        <span class="up_check_text">涨幅达到(%)</span>
+        <input type="number" class="up_to">
+    </div>
+    <div class="up_to_today_high">
+        <input type="checkbox" class="today_high_check">
+        <span class="today_high_text">突破今日新高</span>
+    </div>
+    <div class="high_count">
+        <input type="checkbox" class="high_count_check">
+        <span class="high_count_text">突破今日新高次数</span>
+        <input type="number" class="high_count_input">
+    </div>
+    <div class="break_low">
+        <input type="checkbox" class="low_check">
+        <span class="low_text">突破新低</span>
+    </div>
+    <div class="low_count">
+        <input type="checkbox" class="low_count_check">
+        <span class="low_count_text">突破新低次数</span>
+        <input type="number" class="low_count_input">
+    </div>
+    <div class="ever_up_to">
+        <input type="checkbox" class="ever_up_check">
+        <span class="ever_up_text">今天曾涨到(%)</span>
+        <input type="number" class="ever_up_input">
+    </div>
+    <div class="break_30day_high">
+        <input type="checkbox" class="break_30_check" checked>
+        <span class="break_30_text">突破30日新高(100%)</span>
+        <input type="number" class="break_30_input" value="100">
+    </div>
+    <div class="break_60day_high">
+        <input type="checkbox" class="break_60_check">
+        <span class="break_60_text">突破60日新高</span>
+    </div>
+    <div class="break_30_count">
+        <input type="checkbox" class="break_30_count_check">
+        <span class="break_30_count_text">突破30日新高次数</span>
+        <input type="number" class="break_30_count_input">
+    </div>
+    <div class="limit_up_gte2">
+        <input type="checkbox" class="limit_up_gte2_check" checked>
+        <span class="limit_up_gte2_text">连续涨停数(>=1)</span>
+        <input type="number" class="limit_up_gte2_input" value="2" min="1" step="1">
+    </div>
+    <div class="limit_up_2">
+        <input type="checkbox" class="limit_up_2_check">
+        <span class="limit_up_2_text">涨停数2</span>
+        <input type="number" class="limit_up_2_input">
+    </div>
+    <div class="sort_by_concept">
+        <button class="sort_by_concept_btn">按概念排序</button>
+    </div>
+    <div class="disappeared-stocks-box" id="disappearedStocksBox">
+        <div class="disappeared-title">消失股票</div>
+        <div class="disappeared-list" id="disappearedList"></div>
+    </div>
+    <div id="progress-container" style="display: none; margin-top: 10px;">
+        <div id="progress-text" style="margin-bottom: 5px; font-size: 14px; color: #333;"></div>
+        <progress id="progress" value="0" max="100" style="width: 100%;"></progress>
+    </div>
+</div>
+<!--概念统计表格-->
+<div class="concept-table-container">
+    <table class="concept-table" id="conceptTable">
+        <thead>
+        <tr>
+            <th>概念</th>
+            <th>涨停数</th>
+            <th>今日涨停</th>
+        </tr>
+        </thead>
+        <tbody id="conceptTableBody">
+        </tbody>
+    </table>
+</div>
+<!--股票详细数据表格-->
+<div class="stock-table-container">
+    <table class="stock-table" id="stockTable">
+        <thead>
+        <tr>
+            <th class="order-title">顺序</th>
+            <th class="time-title">时间</th>
+            <th class="name-title sortable" data-column="名称">名字 <span class="sort-arrow"></span></th>
+            <th class="code-title sortable" data-column="代码">代码 <span class="sort-arrow"></span></th>
+            <th class="zhangfu-title sortable" data-column="涨幅">涨幅 <span class="sort-arrow"></span></th>
+            <th class="zuozhangfu-title sortable" data-column="昨日涨幅">昨涨幅 <span class="sort-arrow"></span></th>
+            <th class="gainian-title sortable" data-column="概念">概念 <span class="sort-arrow"></span></th>
+            <th class="hangye-title sortable" data-column="行业">行业 <span class="sort-arrow"></span></th>
+            <th class="liutongshizhi-title sortable" data-column="流通市值">流通市值 <span class="sort-arrow"></span></th>
+            <th class="xianjia-title sortable" data-column="现价">现价 <span class="sort-arrow"></span></th>
+            <th class="huanshoulv-title sortable" data-column="换手率">换手率 <span class="sort-arrow"></span></th>
+            <th class="zhangtingshu-title sortable" data-column="涨停数" title="=1时显示总涨停数(连板+单日)，≥2时显示连板数">涨停数 <span class="sort-arrow"></span></th>
+            <th class="zongzhangtingshu-title sortable" data-column="总涨停数">总涨停数 <span class="sort-arrow"></span></th>
+            <th class="lizhangting-title sortable" data-column="离涨停多少天">离涨停多少天 <span class="sort-arrow"></span></th>
+            <th class="li30rixingao-title sortable" data-column="离30日新高%">离30日新高% <span class="sort-arrow"></span></th>
+            <th class="ri30xingao-title sortable" data-column="30日新高次数">30日新高次数 <span class="sort-arrow"></span></th>
+            <th class="jinrixingao-title">今日新高次数</th>
+            <th class="jintianchuangxinga-title sortable" data-column="今天创新高次数">今天创新高次数 <span class="sort-arrow"></span></th>
+            <th class="li60rixingao-title sortable" data-column="离60日新高%">离60日新高% <span class="sort-arrow"></span></th>
+            <th class="ri30zuigaojia-title sortable" data-column="30日最高价">30日最高价 <span class="sort-arrow"></span></th>
+            <th class="ri60zuigaojia-title sortable" data-column="60日最高价">60日最高价 <span class="sort-arrow"></span></th>
+            <th class="jintianzuigaojia-title sortable" data-column="今日最高价">今天最高价 <span class="sort-arrow"></span></th>
+            <th class="jintianzuidijia-title sortable" data-column="今日最低价">今天最低价 <span class="sort-arrow"></span></th>
+            <th class="lizuigaojia-title sortable" data-column="离最高价%">离最高价% <span class="sort-arrow"></span></th>
+            <th class="lizuidijia-title sortable" data-column="离最低价%">离最低价% <span class="sort-arrow"></span></th>
+            <th class="jintianchuangxindi-title sortable" data-column="今天创新低次数">今天创新低次数 <span class="sort-arrow"></span></th>
+        </tr>
+        </thead>
+        <tbody id="stockTableBody">
+        </tbody>
+    </table>
+</div>
+<!--音频提示-->
+<audio id="alertSound" preload="auto">
+    <source src="股价上穿.wav" type="audio/wav">
+</audio>
+<!--音频开关按钮-->
+<div id="audioToggle" class="audio-toggle" title="点击切换音频">
+    <img id="audioIcon" src="image/声音.png" alt="音频开关">
+</div>
+</body>
+<script>
+    // 音频提示相关变量
+    let isFirstLoad = true;
+    let displayedStocks = new Set();
+    let audioTimeout = null;
+    let audioEnabled = true;
+    let lastUpdateTime = '';
+    let timeUpdateInterval = null;
+    let heightSyncTimer = null;
+    let resizeObserver = null;
+    let autoUpdateRunning = false; // 后端自动更新状态标志
+    // 排序状态管理
+    let currentSort = {
+        column: null,
+        direction: null // null, 'asc', 'desc'
+    };
+    // 股票监控相关变量
+    let stockSnapshot = new Map(); // 股票快照：code => {name, price, high}
+    let disappearedStocksList = []; // 消失股票列表
+    let highlightingStocks = new Set(); // 正在高亮的股票代码
+    let highlightTimers = {}; // 高亮定时器映射
+    
+    // --- 消失/静音相关 ---
+    let lastSeen = new Map();      // code => { ts: 毫秒时间戳, lastHighCount: 第一次进入时记录的"今天创新高次数" }
+    let muteMinutes = 60;          // 60分钟内不重复响（除非突破新的创新高次数）
+    let lastSnapshot = new Map();  // 上一轮表格快照，用于比对"消失/新增"
+    
+    // 新增：追踪筛选条件
+    let lastFilterConditions = null; // 上一次的筛选条件
+    
+    // 消失框：为了"第一条居中、后来往上顶"，我们用两个占位块控制
+    let disappearedFirstCode = null;
+    // 播放提示音函数
+    function playAlert(duration) {
+        if (!audioEnabled) return;
+        const audio = document.getElementById('alertSound');
+        if (!audio) return;
+        if (audioTimeout) {
+            clearTimeout(audioTimeout);
+        }
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log('音频播放失败:', e));
+        audioTimeout = setTimeout(() => {
+            audio.pause();
+            audio.currentTime = 0;
+        }, duration * 1000);
+    }
+    // 获取声音时长
+    function getSoundDuration() {
+        const input = document.getElementById('soundDurationInput');
+        return input ? parseFloat(input.value) || 2 : 2;
+    }
+    // 获取当前时间字符串 HH:MM
+    function getCurrentTimeString() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+    // 采集股票快照
+    function takeStockSnapshot() {
+        const snapshot = new Map();
+// 从表格中采集快照，而不是从mergedData
+        const tableBody = document.getElementById('stockTableBody');
+        if (!tableBody) return snapshot;
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                const name = cells[2].textContent.trim(); // 股票名称在第3列
+                const code = cells[3].textContent.trim(); // 股票代码在第4列
+                const price = cells[8].textContent.trim(); // 现价在第9列
+                const high = cells[19].textContent.trim(); // 今日最高价在第20列
+                snapshot.set(code, {
+                    name: name,
+                    price: price,
+                    high: high
+                });
+            }
+        });
+        console.log('[调试] 采集快照，股票数量:', snapshot.size);
+        return snapshot;
+    }
+    // 对比快照，找出消失和新增的股票
+    function compareSnapshots(oldSnap, newSnap) {
+        const disappeared = [];
+        const newStocks = [];
+        oldSnap.forEach((data, code) => {
+            if (!newSnap.has(code)) {
+                disappeared.push({
+                    code: code,
+                    name: data.name,
+                    time: getCurrentTimeString()
+                });
+            }
+        });
+        newSnap.forEach((data, code) => {
+            if (!oldSnap.has(code)) {
+                newStocks.push({
+                    code: code,
+                    name: data.name,
+                    price: data.price,
+                    high: data.high
+                });
+            }
+        });
+        return {disappeared, newStocks};
+    }
+    // 显示消失的股票
+    function displayDisappearedStocks(stocks) {
+        // 记录
+        stocks.forEach(s => disappearedStocksList.unshift(s));
+
+        const box = document.getElementById('disappearedStocksBox');
+        const list = document.getElementById('disappearedList');
+        if (!box || !list) return;
+
+        // 清空并重建（含占位块）
+        list.innerHTML = '';
+
+        // 确保两个占位块存在
+        const topSpacer = document.createElement('div');
+        topSpacer.className = 'disappeared-spacer';
+        const bottomSpacer = document.createElement('div');
+        bottomSpacer.className = 'disappeared-spacer';
+
+        list.appendChild(topSpacer);
+
+        // 渲染条目（最新在最上方）
+        disappearedStocksList.forEach((stock, index) => {
+            const item = document.createElement('div');
+            item.className = 'disappeared-item';
+            item.textContent = `${stock.code}-${stock.time}`;
+            item.title = `${stock.name} ${stock.code} 消失于${stock.time}`;
+            list.appendChild(item);
+        });
+
+        list.appendChild(bottomSpacer);
+
+        // —— "第一条在中间，从中间开始往上顶"的核心：动态设置 topSpacer 高度 ——
+        // 第一次出现的那只股票，固定为"中心参考对象"
+        if (!disappearedFirstCode && disappearedStocksList.length > 0) {
+            disappearedFirstCode = disappearedStocksList[disappearedStocksList.length - 1].code;
+        }
+
+        // 计算需把"第一条"放在中线的位置
+        const containerH = box.clientHeight - box.querySelector('.disappeared-title').clientHeight;
+        const items = list.querySelectorAll('.disappeared-item');
+        if (items.length === 0) return;
+
+        // 找到"第一条"的索引（在我们的渲染里是最后一个 item）
+        let firstIdx = Array.from(items).findIndex(n => {
+            const t = n.textContent || '';
+            return t.startsWith(disappearedFirstCode + '-');
+        });
+        if (firstIdx === -1) firstIdx = items.length - 1;
+
+        const anyItemH = items[0].offsetHeight || 16;
+        const targetCenterY = containerH / 2;            // 容器中线
+        const firstItemY = (firstIdx + 0.5) * anyItemH;  // 第一条中心的理想位置（不含顶部 spacer）
+        let spacerH = targetCenterY - firstItemY;
+
+        // 顶到头后就不再给 spacer 高度，后续自然下移并出现滚动
+        if (spacerH < 0) spacerH = 0;
+
+        topSpacer.style.height = Math.floor(spacerH) + 'px';
+
+        // 若超出高度，显示滚动条（已经有 overflow-y: auto，这里无需额外处理）
+    }
+    // 高亮新股票
+    function highlightNewStock(stockCode, duration = 10000) {  // 添加duration参数，默认10秒
+        highlightingStocks.add(stockCode);
+        if (highlightTimers[stockCode]) {
+            clearTimeout(highlightTimers[stockCode]);
+        }
+        highlightTimers[stockCode] = setTimeout(() => {
+            // 移除高亮状态
+            highlightingStocks.delete(stockCode);
+            delete highlightTimers[stockCode];
+            // 直接移除当前DOM中的高亮样式（即使暂时不重渲染也能取消）
+            const tbody = document.getElementById('stockTableBody');
+            if (tbody) {
+                const rows = tbody.querySelectorAll('tr');
+                rows.forEach(r => {
+                    const codeCell = r.querySelector('td:nth-child(4)'); // 代码现在在第4列
+                    if (codeCell && codeCell.textContent.trim() === String(stockCode)) {
+                        r.classList.remove('new-stock-highlight');
+                    }
+                })
+            }
+            // 删除强制重渲，避免闪烁
+        }, duration);  // 使用传入的duration参数
+    }
+    // 检查并应用高亮
+    function applyHighlightIfNeeded(row, stockCode) {
+        if (highlightingStocks.has(stockCode)) {
+            console.log('[调试] 应用高亮到股票:', stockCode);
+            row.classList.add('new-stock-highlight');
+        } else {
+// console.log('[调试] 股票不在高亮列表:', stockCode);
+        }
+    }
+    
+    /* 把常见单位全部换算到"亿" */
+    function parseToYi(text) {
+        if (!text) return null;
+        const s = text.trim().replace(/,/g, '');
+        const m = s.match(/([+-]?\d+(\.\d+)?)/);
+        if (!m) return null;
+        const n = parseFloat(m[1]);
+
+        if (/万亿/.test(s)) return n * 10000;   // 万亿 => 亿
+        if (/亿/.test(s))   return n;           // 亿
+        if (/万/.test(s))   return n * 0.0001;  // 万 => 亿
+        if (/(元|CNY|人民币)/.test(s)) return n / 1e8; // 元 => 亿
+        return n; // 默认按"亿"理解
+    }
+    
+    function colorizeRightTable() {
+        // 找到右侧表格
+        const table = document.querySelector('#stockTable');
+        if (!table) return;
+
+        // 清理旧颜色，避免叠加
+        table.querySelectorAll('.t-red,.t-blue,.t-green,.bg-soft').forEach(el => {
+            el.classList.remove('t-red','t-blue','t-green','bg-soft');
+        });
+
+        // 定位列索引（按表头文字，去掉空格和箭头）
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th =>
+            (th.textContent || '').replace(/\s/g, '').replace(/[↑↓]/g, '')
+        );
+
+        const col = {
+            zhangfu:   headers.findIndex(h => h === '涨幅'),
+            ztZhangfu: headers.findIndex(h => h === '昨涨幅'),
+            cap:       headers.findIndex(h => h.includes('流通市值')),
+            price:     headers.findIndex(h => h.includes('现价') || h.includes('最新价')),
+            high30:    headers.findIndex(h => h.includes('离30日新高') && h.includes('%')),
+        };
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(tr => {
+            const tds = tr.children;
+
+            // 1) 涨幅：整列红色
+            if (col.zhangfu > -1 && tds[col.zhangfu]) {
+                tds[col.zhangfu].classList.add('t-red');
+            }
+
+            // 2) 昨天涨幅：整列绿色
+            if (col.ztZhangfu > -1 && tds[col.ztZhangfu]) {
+                tds[col.ztZhangfu].classList.add('t-green');
+            }
+
+            // 3) 流通市值：>100亿 红；<100亿 蓝（等于100亿不加色）
+            if (col.cap > -1 && tds[col.cap]) {
+                const v = parseToYi(tds[col.cap].textContent);
+                if (v != null) {
+                    if (v > 100) tds[col.cap].classList.add('t-red');
+                    else if (v < 100) tds[col.cap].classList.add('t-blue');
+                }
+            }
+
+            // 4) 现价：>30 红；<30 蓝（=30 不加色）
+            if (col.price > -1 && tds[col.price]) {
+                const v = parseFloat((tds[col.price].textContent || '').replace(/,/g, ''));
+                if (!Number.isNaN(v)) {
+                    if (v > 30) tds[col.price].classList.add('t-red');
+                    else if (v < 30) tds[col.price].classList.add('t-blue');
+                }
+            }
+
+            // 5) 30日新高%：整列加底色
+            if (col.high30 > -1 && tds[col.high30]) {
+                tds[col.high30].classList.add('bg-soft');
+            }
+        });
+    }
+    function updateProgress(current, total, message) {
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progress-text');
+        const progressContainer = document.getElementById('progress-container');
+        progressContainer.style.display = 'block';
+        const percentage = (current / total) * 100;
+        progressBar.value = percentage;
+        progressBar.max = 100;
+        progressText.textContent = `${message} (${current}/${total})`;
+    }
+    function hideProgress() {
+        const progressContainer = document.getElementById('progress-container');
+        progressContainer.style.display = 'none';
+    }
+    function startTimeUpdateTimer() {
+        if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+        }
+        lastUpdateTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+        const interval = parseInt(document.querySelector('.scrapt_time').value) || 5;
+        console.log(`启动时间更新定时器，间隔: ${interval}秒`);
+        timeUpdateInterval = setInterval(() => {
+            lastUpdateTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+            console.log(`时间更新: ${lastUpdateTime}`);
+            if (window.mergedData) {
+                fillStockTable();
+            }
+        }, interval * 1000);
+        
+        // 启动后端自动更新（如果还没有启动）
+        if (!autoUpdateRunning && typeof pywebview !== 'undefined' && pywebview.api) {
+            pywebview.api.start_auto_update(interval).then(function(result) {
+                autoUpdateRunning = true;
+                console.log('后端自动更新已启动（定时器）:', result);
+            }).catch(function(error) {
+                console.error('启动后端自动更新失败:', error);
+            });
+        }
+    }
+    function stopTimeUpdateTimer() {
+        if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+            timeUpdateInterval = null;
+            console.log('时间更新定时器已停止');
+        }
+    }
+    function startHeightSync() {
+        // 停止旧的观察器
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+        }
+
+        // 防止递归触发的标志
+        let isSyncing = false;
+
+        const syncHeights = () => {
+            // 如果正在同步，跳过
+            if (isSyncing) {
+                console.log('========== 跳过：正在同步中 ==========');
+                return;
+            }
+            
+            isSyncing = true;
+            console.log('========== syncHeights 被调用 ==========');
+
+            if (!window.conceptRowRanges || !window.conceptOrder) {
+                console.log('  ❌ conceptRowRanges 或 conceptOrder 不存在');
+                isSyncing = false;
+                return;
+            }
+
+            const currentMode = (currentSort.column && currentSort.direction) ? 'custom' : 'concept';
+            console.log(`  当前模式: ${currentMode}`);
+
+            if (currentMode !== 'concept') {
+                console.log('  ⏭️ 非概念排序模式，跳过同步');
+                isSyncing = false;
+                return;
+            }
+
+            const conceptTableBody = document.getElementById('conceptTableBody');
+            if (!conceptTableBody) {
+                console.log('  ❌ 找不到左侧概念表格');
+                isSyncing = false;
+                return;
+            }
+
+            const conceptRows = conceptTableBody.querySelectorAll('tr');
+            console.log(`  左侧概念行数: ${conceptRows.length}`);
+            console.log(`  需要同步的概念数: ${window.conceptOrder.length}`);
+
+            // 按照保存的概念顺序遍历，确保和左侧表格行顺序一致
+            window.conceptOrder.forEach((concept, index) => {
+                console.log(`\n【${concept}】开始同步高度`);
+
+                if (index >= conceptRows.length) {
+                    console.log(`  ⚠️ 索引${index}超出左侧行数${conceptRows.length}`);
+                    return;
+                }
+
+                const conceptRow = conceptRows[index];
+                const range = window.conceptRowRanges[concept];
+
+                if (!range || !range.firstRow || !range.lastRow) {
+                    console.log(`  ❌ range数据不完整`);
+                    console.log(`    range存在: ${!!range}`);
+                    console.log(`    firstRow存在: ${!!range?.firstRow}`);
+                    console.log(`    lastRow存在: ${!!range?.lastRow}`);
+                    return;
+                }
+
+                try {
+                    // 检查DOM节点是否还在文档中（避免计算已删除的节点）
+                    const firstRowInDOM = document.body.contains(range.firstRow);
+                    const lastRowInDOM = document.body.contains(range.lastRow);
+
+                    console.log(`  firstRow在DOM中: ${firstRowInDOM}`);
+                    console.log(`  lastRow在DOM中: ${lastRowInDOM}`);
+
+                    if (!firstRowInDOM || !lastRowInDOM) {
+                        console.log(`  ❌ DOM元素不在文档中，跳过`);
+                        return;
+                    }
+
+                    // 获取firstRow和lastRow的内容用于调试
+                    const firstRowCells = range.firstRow.querySelectorAll('td');
+                    const lastRowCells = range.lastRow.querySelectorAll('td');
+                    const firstRowContent = firstRowCells.length >= 4 ? `${firstRowCells[2].textContent} ${firstRowCells[3].textContent}` : '未知';
+                    const lastRowContent = lastRowCells.length >= 4 ? `${lastRowCells[2].textContent} ${lastRowCells[3].textContent}` : '未知';
+
+                    console.log(`  firstRow内容: ${firstRowContent}`);
+                    console.log(`  lastRow内容: ${lastRowContent}`);
+
+                    // 精确量取整个区块（方案1：首/尾矩形差）
+                    // 这样可以自动涵盖高亮行(2px边框)和普通行(1px边框)的高度差异
+                    const firstRect = range.firstRow.getBoundingClientRect();
+                    const lastRect = range.lastRow.getBoundingClientRect();
+                    // 右侧整组的总高度（已包含边框）- 用 floor 降噪
+                    const rightTotalHeight = Math.floor(lastRect.bottom - firstRect.top);
+
+                    console.log(`  firstRect.top: ${firstRect.top.toFixed(2)}px`);
+                    console.log(`  lastRect.bottom: ${lastRect.bottom.toFixed(2)}px`);
+                    console.log(`  右侧总高度(含边框): ${rightTotalHeight}px`);
+
+                    // 只有当高度有效时才应用（避免应用错误的高度）
+                    if (rightTotalHeight > 0) {
+                        const beforeHeight = conceptRow.offsetHeight;
+                        console.log(`  应用前左侧高度: ${beforeHeight}px`);
+
+                        const cells = conceptRow.querySelectorAll('td');
+                        
+                        // 取左侧第一个单元格，读出边框和内边距
+                        const sampleCell = cells[0];
+                        const cs = window.getComputedStyle(sampleCell);
+                        const topBorder = parseFloat(cs.borderTopWidth) || 0;
+                        const bottomBorder = parseFloat(cs.borderBottomWidth) || 0;
+                        const topPadding = parseFloat(cs.paddingTop) || 0;
+                        const bottomPadding = parseFloat(cs.paddingBottom) || 0;
+                        
+                        // 在 border-collapse: collapse 模式下：
+                        // - 相邻行的边框会折叠（中间行的边框只有1px，不是2px）
+                        // - 但顶部和底部的边框是完整的（各1px）
+                        // - padding 不会被折叠，每个td都有上下padding
+                        // 
+                        // rightTotalHeight 已经是右侧整个区块的总高度（从firstRow.top到lastRow.bottom）
+                        // 这个高度是通过 getBoundingClientRect() 测量的实际渲染高度
+                        // 包含了：所有行的内容高度 + 所有行的padding + 折叠后的边框
+                        //
+                        // 对于左侧td，我们设置 height 时使用 box-sizing: border-box
+                        // 此时 height 的定义是：内容高度 + padding + border
+                        // 
+                        // 重要：由于我们设置 padding: 0 3px（上下padding=0，左右padding=3px），
+                        // 所以：
+                        //   height = 内容高度 + 0 + border = 内容高度 + border
+                        //   实际td总高度 = height = 内容高度 + border
+                        //
+                        // 右侧td的总高度（通过getBoundingClientRect）已经包含了内容+padding+border
+                        // 但由于右侧td的padding上下也是0，所以：
+                        //   右侧td总高度 = 内容高度 + border
+                        //
+                        // 要让左侧tr的总高度 = 右侧整个概念组的总高度（rightTotalHeight），
+                        // 我们需要让左侧td的height = rightTotalHeight - (topBorder + bottomBorder)
+                        // 因为：
+                        //   左侧td实际总高度 = height + topBorder + bottomBorder - (topBorder + bottomBorder)
+                        //   不对，重新计算...
+                        //
+                        // 实际上，在box-sizing: border-box下：
+                        //   设置的height值本身就包含了border
+                        //   所以如果我们设置 height = X，那么：
+                        //      td的实际总高度 = X（因为X已经包含了border）
+                        //
+                        // 但是rightTotalHeight是多个td组合的总高度，包含了：
+                        //   - 第一个td的top border
+                        //   - 所有td的内容高度
+                        //   - 所有td的padding（但上下padding=0，所以不影响）
+                        //   - 中间折叠的边框（只有1px）
+                        //   - 最后一个td的bottom border
+                        //
+                        // 我们需要让左侧单个td的高度 = rightTotalHeight
+                        // 所以应该设置 height = rightTotalHeight
+                        // 但这样会导致左侧td高度 = rightTotalHeight（包含border）
+                        // 而rightTotalHeight本身也包含了border，所以会多一层border
+                        //
+                        // 正确的理解：
+                        //   右侧的第一个td的top border = 1px
+                        //   右侧的最后一个td的bottom border = 1px
+                        //   中间的边框折叠 = 每个概念组的中间行之间只有1px边框
+                        //
+                        //   左侧td设置height时，如果height包含了border，那么：
+                        //      td的实际总高度 = height
+                        //   所以我们应该设置 height = rightTotalHeight
+                        //
+                        // 但实际上，我们需要验证一下：rightTotalHeight是否已经包含了所有边框
+                        // 如果包含了，那么直接设置 height = rightTotalHeight 即可
+                        
+                        // 方案2：在 border-collapse: collapse 模式下，两边边框模型完全一致
+                        // 右侧总高度（rightTotalHeight）已经包含了所有折叠后的边框和内容
+                        // 左侧td设置height时使用 box-sizing: border-box，height本身就包含了border
+                        // 因此直接让左侧td的height = 右侧总高度，两者的实际渲染高度就会完全一致
+                        const borderSum = topBorder + bottomBorder;
+                        
+                        // 直接使用右侧总高度，因为两边都是collapse模式，边框处理方式一致
+                        const targetContentHeight = rightTotalHeight;
+                        
+                        // 获取tr的class，确定应该使用什么颜色的边框
+                        // 在border-collapse: collapse模式下，tr的边框无效，必须直接给td设置边框颜色
+                        const trClass = conceptRow.className;
+                        let borderBottomColor = '#000'; // 默认黑色
+                        if (trClass.includes('concept-last-row-0')) {
+                            borderBottomColor = '#ff0000'; // 红色
+                        } else if (trClass.includes('concept-last-row-1')) {
+                            borderBottomColor = '#ffcc00'; // 黄色
+                        } else if (trClass.includes('concept-last-row-2')) {
+                            borderBottomColor = '#0066ff'; // 蓝色
+                        } else if (trClass.includes('concept-last-row-3')) {
+                            borderBottomColor = '#00cc00'; // 绿色
+                        } else if (trClass.includes('concept-last-row-4')) {
+                            borderBottomColor = '#9900ff'; // 紫色
+                        }
+                        
+                        console.log(`  左侧边框: ${borderSum.toFixed(2)}px (上${topBorder.toFixed(2)} + 下${bottomBorder.toFixed(2)})`);
+                        console.log(`  左侧padding: ${(topPadding + bottomPadding).toFixed(2)}px (上${topPadding.toFixed(2)} + 下${bottomPadding.toFixed(2)})`);
+                        console.log(`  右侧总高度: ${rightTotalHeight}px`);
+                        console.log(`  目标height值: ${targetContentHeight}px (直接等于右侧总高度)`);
+                        console.log(`  tr的class: ${trClass}, 底部边框颜色: ${borderBottomColor}`);
+                        console.log(`  说明: 在collapse模式下，两边边框模型一致，直接使用右侧高度即可`);
+
+                        cells.forEach(cell => {
+                            // 一次性设置所有样式，减少重排次数
+                            cell.style.cssText = `
+                                height: ${targetContentHeight}px !important;
+                                min-height: ${targetContentHeight}px !important;
+                                max-height: ${targetContentHeight}px !important;
+                                line-height: ${targetContentHeight}px !important;
+                                padding: 0 !important;
+                                box-sizing: border-box !important;
+                                overflow: hidden !important;
+                                vertical-align: middle !important;
+                                font-size: 12px !important;
+                                display: table-cell !important;
+                                border-bottom: 1px solid ${borderBottomColor} !important;
+                            `;
+                        });
+
+                        const afterHeight = conceptRow.offsetHeight;
+                        const heightDiff = Math.abs(afterHeight - rightTotalHeight);
+                        console.log(`  应用后左侧高度: ${afterHeight}px`);
+                        console.log(`  高度差值: ${heightDiff.toFixed(1)}px`);
+                        console.log(`  ✅ 高度同步${heightDiff < 1 ? '成功' : '失败'} (允许±1px误差)`);
+                    } else {
+                        console.log(`  ⚠️ 计算高度为0，跳过应用`);
+                    }
+                } catch (e) {
+                    console.error(`  ❌ 计算失败:`, e);
+                }
+            });
+
+            console.log('========== syncHeights 执行完成 ==========\n');
+            isSyncing = false;
+        };
+
+        // 暴露到全局，方便滚动事件调用
+        window.syncHeights = syncHeights;
+
+        // 防抖定时器（避免频繁触发）
+        let syncTimeout = null;
+
+        // 创建 ResizeObserver 监听右侧表格容器
+        resizeObserver = new ResizeObserver(entries => {
+            // 清除之前的定时器
+            if (syncTimeout) clearTimeout(syncTimeout);
+
+            // 增加防抖时间到500ms，大幅减少触发频率
+            syncTimeout = setTimeout(() => {
+                // 使用双重 requestAnimationFrame 确保浏览器完成布局计算
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        syncHeights();
+                    });
+                });
+            }, 500);  // 从200ms增加到500ms
+        });
+
+        // 监听右侧表格容器
+        const stockTableBody = document.getElementById('stockTableBody');
+        if (stockTableBody) {
+            resizeObserver.observe(stockTableBody);
+        }
+
+        // 初始同步：延迟1秒确保DOM完全渲染和布局稳定
+        // 避免与其他异步操作冲突
+        setTimeout(() => {
+            syncHeights();
+        }, 1000);
+    }
+    function stopHeightSync() {
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
+        }
+    }
+    // 按概念排序（恢复默认）
+    function sortByConcept() {
+        currentSort = { column: null, direction: null };
+// 清除所有箭头
+        document.querySelectorAll('.sort-arrow').forEach(arrow => {
+            arrow.className = 'sort-arrow';
+        });
+        stopHeightSync();
+        if (window.mergedData) {
+            fillStockTable();
+        }
+    }
+    // 表头排序
+    function sortTable(column) {
+// 如果点击同一列，切换排序方向
+        if (currentSort.column === column) {
+            if (currentSort.direction === 'asc') {
+                currentSort.direction = 'desc';
+            } else if (currentSort.direction === 'desc') {
+// 第三次点击恢复概念排序
+                currentSort.column = null;
+                currentSort.direction = null;
+            } else {
+                currentSort.direction = 'asc';
+            }
+        } else {
+// 点击新列，设置为升序
+            currentSort.column = column;
+            currentSort.direction = 'asc';
+        }
+// 更新箭头显示
+        document.querySelectorAll('.sort-arrow').forEach(arrow => {
+            arrow.className = 'sort-arrow';
+        });
+        if (currentSort.column && currentSort.direction) {
+            const th = document.querySelector(`th[data-column="${column}"]`);
+            if (th) {
+                const arrow = th.querySelector('.sort-arrow');
+                arrow.className = `sort-arrow ${currentSort.direction}`;
+            }
+        }
+        stopHeightSync();
+        if (window.mergedData) {
+            fillStockTable();
+        }
+    }
+    function fillStockTable() {
+// ========== 停止高度同步，避免更新过程中的抖动 ==========
+        stopHeightSync();
+        
+// ========== 新增：检测筛选条件是否改变 ==========
+        const currentFilterConditions = {
+            upCheck: document.querySelector('.up_check').checked,
+            upTo: document.querySelector('.up_to').value,
+            todayHighCheck: document.querySelector('.today_high_check').checked,
+            highCountCheck: document.querySelector('.high_count_check').checked,
+            highCount: document.querySelector('.high_count_input').value,
+            lowCheck: document.querySelector('.low_check').checked,
+            lowCountCheck: document.querySelector('.low_count_check').checked,
+            lowCount: document.querySelector('.low_count_input').value,
+            everUpCheck: document.querySelector('.ever_up_check').checked,
+            everUp: document.querySelector('.ever_up_input').value,
+            break30Check: document.querySelector('.break_30_check').checked,
+            break30: document.querySelector('.break_30_input').value,
+            break30CountCheck: document.querySelector('.break_30_count_check').checked,
+            break30Count: document.querySelector('.break_30_count_input').value,
+            break60Check: document.querySelector('.break_60_check').checked,
+            limitUpGte2Check: document.querySelector('.limit_up_gte2_check').checked,
+            limitUpGte2: document.querySelector('.limit_up_gte2_input').value,
+            limitUp2Check: document.querySelector('.limit_up_2_check').checked,
+            limitUp2: document.querySelector('.limit_up_2_input').value,
+            sunDayCheck: document.querySelector('.checkbox').checked,
+            sunDay: document.querySelector('.sun_day').value,
+            totalLimitUpCheck: document.querySelector('.total-limit-up-check').checked,
+            totalLimitUp: document.querySelector('.total-limit-up-input').value,
+            yesterdayNegativeCheck: document.querySelector('.yesterday-negative-check').checked,
+            prevDaysPositiveCheck: document.querySelector('.prev-days-positive-check').checked,
+            prevDaysPositive: document.querySelector('.prev-days-positive-input').value,
+            preview: document.querySelector('.preview').value,
+            back: document.querySelector('.back').value,
+        };
+        
+        // 判断筛选条件是否改变
+        const filterChanged = !lastFilterConditions || 
+            JSON.stringify(currentFilterConditions) !== JSON.stringify(lastFilterConditions);
+        
+        if (filterChanged) {
+            console.log('[调试] 筛选条件已改变');
+        } else {
+            console.log('[调试] 筛选条件未改变');
+        }
+        
+        lastFilterConditions = currentFilterConditions;
+        
+// ========== 第一步：采集"上一轮表格"的快照 ==========
+        const prevSnapshot = takeStockSnapshot();
+        console.log('[调试] prevSnapshot.size:', prevSnapshot.size, 'isFirstLoad:', isFirstLoad);
+
+// ========== 第二步：开始渲染表格（先计算将要显示的数据集） ==========
+        const stockTableBody = document.getElementById('stockTableBody')
+        // 使用DocumentFragment批量插入，减少重排次数
+        const fragment = document.createDocumentFragment();
+        stockTableBody.innerHTML = ''
+        const upCheckEnabled = document.querySelector('.up_check').checked
+        const upToValue = parseFloat(document.querySelector('.up_to').value) || 0
+        const todayHighCheckEnabled = document.querySelector('.today_high_check').checked
+        const highCountCheckEnabled = document.querySelector('.high_count_check').checked
+        const highCountValue = parseInt(document.querySelector('.high_count_input').value) || 0
+        const lowCheckEnabled = document.querySelector('.low_check').checked
+        const lowCountCheckEnabled = document.querySelector('.low_count_check').checked
+        const lowCountValue = parseInt(document.querySelector('.low_count_input').value) || 0
+        const everUpCheckEnabled = document.querySelector('.ever_up_check').checked
+        const everUpValue = parseFloat(document.querySelector('.ever_up_input').value) || 0
+        const break30CheckEnabled = document.querySelector('.break_30_check').checked
+        const break30Value = parseFloat(document.querySelector('.break_30_input').value) || 100
+        const break30CountCheckEnabled = document.querySelector('.break_30_count_check').checked
+        const break30CountValue = parseInt(document.querySelector('.break_30_count_input').value) || 0
+        const break60CheckEnabled = document.querySelector('.break_60_check').checked
+        const limitUpGte2CheckEnabled = document.querySelector('.limit_up_gte2_check').checked
+        const limitUpGte2Value = parseInt(document.querySelector('.limit_up_gte2_input').value) || 2
+        const limitUp2CheckEnabled = document.querySelector('.limit_up_2_check').checked
+        const limitUp2Value = parseInt(document.querySelector('.limit_up_2_input').value) || 2
+        const sunDayCheckEnabled = document.querySelector('.checkbox').checked
+        const sunDayValue = parseInt(document.querySelector('.sun_day').value) || 0
+        const totalLimitUpCheckEnabled = document.querySelector('.total-limit-up-check').checked
+        const totalLimitUpValue = parseInt(document.querySelector('.total-limit-up-input').value) || 1
+        const yesterdayNegativeCheckEnabled = document.querySelector('.yesterday-negative-check').checked
+        const prevDaysPositiveCheckEnabled = document.querySelector('.prev-days-positive-check').checked
+        const prevDaysPositiveValue = parseInt(document.querySelector('.prev-days-positive-input').value) || 3
+        const currentTime = lastUpdateTime || new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit', second: '2-digit'})
+        let rowIndex = 1
+        const processedStocks = new Set()
+        const currentDisplayedStocks = new Set()
+        const filteredStocks = []
+        for (const [date, stocksList] of Object.entries(window.conceptData)) {
+            for (const stockData of stocksList) {
+                const stockCode = stockData[0]
+                if (processedStocks.has(stockCode)) continue
+                processedStocks.add(stockCode)
+                const stockName = stockData[1]
+                const concept = stockData[3]
+                const merged = window.mergedData[stockCode]
+                if (!merged) continue
+                const minDaysFromLimitUp = parseInt(document.querySelector('.preview').value) || 3
+                const maxDaysFromLimitUp = parseInt(document.querySelector('.back').value) || 21
+                // 根据股票代码判断使用严格版还是宽松版
+                // 3开头和68开头用严格版（19.8%），其他用宽松版（9.8%）
+                const useStrict = stockCode.startsWith('3') || stockCode.startsWith('68');
+                const daysFromLimitUp = useStrict 
+                    ? merged.离涨停多少天_严格  // 3开头和68开头用严格版
+                    : merged.离涨停多少天_宽松; // 其他用宽松版
+                if (daysFromLimitUp === '无涨停' || daysFromLimitUp === '-' || daysFromLimitUp === undefined) continue
+                const days = parseInt(daysFromLimitUp)
+                if (isNaN(days) || days < minDaysFromLimitUp || days > maxDaysFromLimitUp) continue
+                if (sunDayCheckEnabled) {
+                    const sunnyDays = merged.阳天数 || 0
+                    if (sunnyDays !== sunDayValue) continue
+
+// 新增：如果阳天数>0，同时要求涨幅>0（过滤高开低走的股票）
+                    if (sunDayValue > 0) {
+                        const zhangfu = parseFloat(merged.涨幅)
+                        if (isNaN(zhangfu) || zhangfu <= 0) continue
+                    }
+                }
+                const zhangfu = parseFloat(merged.涨幅)
+                if (upCheckEnabled && (isNaN(zhangfu) || zhangfu < upToValue)) continue
+                if (todayHighCheckEnabled && (!merged.今日最高价 || parseFloat(merged.现价) < parseFloat(merged.今日最高价))) continue
+                if (highCountCheckEnabled) {
+                    const highCount = merged.今天创新高次数 || 0
+                    if (highCount < highCountValue) continue
+                }
+                if (lowCheckEnabled && (!merged.今日最低价 || parseFloat(merged.现价) > parseFloat(merged.今日最低价))) continue
+                if (lowCountCheckEnabled) {
+                    const lowCount = merged.今天创新低次数 || 0
+                    if (lowCount < lowCountValue) continue
+                }
+                if (everUpCheckEnabled) {
+                    const everUpZhangfu = parseFloat(merged.曾经最高涨幅) || 0
+                    if (everUpZhangfu < everUpValue) continue
+                }
+                if (break30CheckEnabled) {
+                    const currentPrice = parseFloat(merged['现价']) || 0
+                    const max30d = parseFloat(merged['30日最高价']) || 0
+                    if (max30d > 0) {
+                        const priceRatio = (currentPrice / max30d) * 100
+                        if (priceRatio < break30Value) continue
+                    }
+                }
+                if (break30CountCheckEnabled) {
+                    const count30 = merged['30日新高次数'] || 0
+                    if (count30 < break30CountValue) continue
+                }
+                if (break60CheckEnabled && !merged.已突破60日新高) continue
+                if (limitUpGte2CheckEnabled) {
+                    // 根据股票代码判断使用严格版还是宽松版
+                    // 3开头和68开头用严格版（19.8%），其他用宽松版（9.8%）
+                    const consecutive = useStrict 
+                        ? (merged.连续涨停数_严格 || 0) 
+                        : (merged.连续涨停数_宽松 || 0);
+                    const daysFromLimitUp = useStrict 
+                        ? merged.离涨停多少天_严格 
+                        : merged.离涨停多少天_宽松;
+                    
+                    // 特殊处理：连续涨停数=1 表示"显示所有有涨停记录的股票"
+                    if (limitUpGte2Value === 1) {
+                        // 筛选条件：有涨停记录（离涨停多少天不是'无涨停'）
+                        // 不限制连续涨停数，既包括单日涨停（consecutive=0）也包括连续涨停（consecutive>=2）
+                        if (daysFromLimitUp === '无涨停') continue;
+                    } else {
+                        // 常规逻辑：连续涨停数>=2，筛选连续涨停
+                        if (consecutive < limitUpGte2Value) continue;
+                    }
+                }
+                if (limitUp2CheckEnabled) {
+// 根据输入框的值，决定使用哪个版本的连续涨停数
+                    const consecutiveLimitUp = limitUp2Value == 1
+                        ? (merged.连续涨停数_严格 || 0)  // 输入1，用严格版（300/688需19.8%）
+                        : (merged.连续涨停数_宽松 || 0); // 输入2及以上，用宽松版（统一9.8%）
+                    if (consecutiveLimitUp !== limitUp2Value) continue
+                }
+                // 总涨停数筛选
+                if (totalLimitUpCheckEnabled) {
+                    // 根据股票代码判断使用严格版还是宽松版
+                    const useStrict = stockCode.startsWith('3') || stockCode.startsWith('68');
+                    const consecutiveCount = useStrict 
+                        ? (merged.连续涨停数_严格 || 0) 
+                        : (merged.连续涨停数_宽松 || 0);
+                    const daysFromLimit = useStrict 
+                        ? merged.离涨停多少天_严格 
+                        : merged.离涨停多少天_宽松;
+                    
+                    // 判断是否为单日涨停：连续涨停数=0 且 有涨停记录
+                    const isSingleDayLimitUp = (consecutiveCount === 0 && daysFromLimit !== '无涨停');
+                    
+                    // 计算总涨停数（与表格显示逻辑一致）
+                    let displayTotalLimitUpCount;
+                    if (isSingleDayLimitUp) {
+                        // 单日涨停：总涨停数 = 全部涨停天数 - 1
+                        const allLimitDays = useStrict 
+                            ? (merged.全部涨停天数_严格 || 0) 
+                            : (merged.全部涨停天数_宽松 || 0);
+                        displayTotalLimitUpCount = Math.max(0, allLimitDays - 1);
+                    } else {
+                        // 连续涨停：使用原有的总涨停数_天数
+                        displayTotalLimitUpCount = useStrict 
+                            ? (merged.总涨停数_天数_严格 !== undefined ? merged.总涨停数_天数_严格 : 0) 
+                            : (merged.总涨停数_天数_宽松 !== undefined ? merged.总涨停数_天数_宽松 : 0);
+                    }
+                    
+                    // 筛选：总涨停数必须等于输入值
+                    if (displayTotalLimitUpCount !== totalLimitUpValue) continue;
+                }
+                // 昨天阴筛选：昨日涨幅 < 0
+                if (yesterdayNegativeCheckEnabled) {
+                    const change = parseFloat(merged.昨日涨幅) || 0
+                    if (change >= 0) continue
+                }
+                // 前N天阳筛选：前N天连续阳涨幅天数 >= 用户输入值
+                if (prevDaysPositiveCheckEnabled) {
+                    const prevPositiveDays = merged.前N天阳天数 || 0
+                    if (prevPositiveDays < prevDaysPositiveValue) continue
+                }
+                filteredStocks.push({stockCode, stockName, concept, merged})
+            }
+        }
+        const conceptRowElements = {};
+        const conceptRowRanges = {};
+// 如果有自定义排序，应用排序
+        if (currentSort.column && currentSort.direction) {
+            filteredStocks.sort((a, b) => {
+                let valA = a.merged[currentSort.column];
+                let valB = b.merged[currentSort.column];
+// 处理数值类型
+                if (!isNaN(parseFloat(valA)) && !isNaN(parseFloat(valB))) {
+                    valA = parseFloat(valA);
+                    valB = parseFloat(valB);
+                } else {
+// 字符串类型
+                    valA = String(valA || '');
+                    valB = String(valB || '');
+                }
+                if (currentSort.direction === 'asc') {
+                    return valA > valB ? 1 : valA < valB ? -1 : 0;
+                } else {
+                    return valA < valB ? 1 : valA > valB ? -1 : 0;
+                }
+            });
+        }
+// 统计概念和构建概念顺序
+        const conceptGroups = {}
+        filteredStocks.forEach(stock => {
+            const concept = stock.concept || '其他'
+            if (!conceptGroups[concept]) {
+                conceptGroups[concept] = []
+            }
+            conceptGroups[concept].push(stock)
+        })
+        const backendConceptCount = {}
+        if (window.conceptCount) {
+            Object.assign(backendConceptCount, window.conceptCount)
+        }
+        let sortedConcepts, conceptOrderMap;
+        if (currentSort.column && currentSort.direction) {
+// 自定义排序模式：概念按在filteredStocks中第一次出现的顺序
+            const conceptFirstAppearance = {};
+            filteredStocks.forEach((stock, index) => {
+                const concept = stock.concept || '其他';
+                if (!(concept in conceptFirstAppearance)) {
+                    conceptFirstAppearance[concept] = index;
+                }
+            });
+// 按首次出现位置排序概念
+            sortedConcepts = Object.entries(conceptGroups).sort((a, b) => {
+                return conceptFirstAppearance[a[0]] - conceptFirstAppearance[b[0]];
+            });
+        } else {
+// 概念排序模式：先按今日涨停数降序，再按涨停数降序
+            sortedConcepts = Object.entries(conceptGroups).sort((a, b) => {
+                const conceptA = a[0]
+                const conceptB = b[0]
+                const todayCountA = (window.todayLimitUp && window.todayLimitUp[conceptA]) || 0
+                const todayCountB = (window.todayLimitUp && window.todayLimitUp[conceptB]) || 0
+                const countA = backendConceptCount[conceptA] || 0
+                const countB = backendConceptCount[conceptB] || 0
+                if (todayCountB !== todayCountA) {
+                    return todayCountB - todayCountA
+                }
+                return countB - countA
+            });
+        }
+        conceptOrderMap = {}
+        sortedConcepts.forEach(([concept], index) => {
+            conceptOrderMap[concept] = index
+        })
+        const conceptRowCounts = {}
+        sortedConcepts.forEach(([concept]) => {
+            conceptRowCounts[concept] = 0
+        })
+// 填充右侧表格
+        if (currentSort.column && currentSort.direction) {
+// 自定义排序：直接按filteredStocks顺序填充
+            const conceptStockCounters = {};
+            filteredStocks.forEach((stock) => {
+                const {stockCode, stockName, concept, merged} = stock;
+                const stockConcept = concept || '其他';
+
+// 初始化概念的范围记录（同时保存股票数量）
+                if (!conceptRowRanges[stockConcept]) {
+                    conceptRowRanges[stockConcept] = { 
+                        firstRow: null, 
+                        lastRow: null,
+                        stockCount: conceptGroups[stockConcept].length  // 直接保存股票数量
+                    };
+                }
+
+                if (!conceptStockCounters[stockConcept]) {
+                    conceptStockCounters[stockConcept] = 0;
+                }
+                conceptStockCounters[stockConcept]++;
+                const isLastInConcept = (conceptStockCounters[stockConcept] === conceptGroups[stockConcept].length);
+                const row = document.createElement('tr');
+                if (isLastInConcept) {
+                    const colorIndex = conceptOrderMap[stockConcept];
+                    if (colorIndex < 5) {
+                        row.className = `concept-last-row-${colorIndex}`;
+                    } else {
+                        row.className = 'concept-last-row-other';
+                    }
+                }
+                // 根据股票代码判断使用严格版还是宽松版
+                // 3开头和68开头用严格版（19.8%），其他用宽松版（9.8%）
+                const useStrict_display = stockCode.startsWith('3') || stockCode.startsWith('68');
+                
+                // 计算显示用的涨停数和总涨停数
+                const consecutiveCount = useStrict_display 
+                    ? (merged.连续涨停数_严格 || 0) 
+                    : (merged.连续涨停数_宽松 || 0);
+                const daysFromLimit = useStrict_display 
+                    ? merged.离涨停多少天_严格 
+                    : merged.离涨停多少天_宽松;
+                
+                // 判断是否为单日涨停：连续涨停数=0 且 有涨停记录
+                const isSingleDayLimitUp = (consecutiveCount === 0 && daysFromLimit !== '无涨停');
+                
+                // 涨停数显示：单日涨停显示1，连续涨停显示实际天数
+                const displayLimitUpCount = isSingleDayLimitUp ? 1 : consecutiveCount;
+                
+                // 总涨停数显示
+                let displayTotalLimitUpCount;
+                if (isSingleDayLimitUp) {
+                    // 单日涨停：总涨停数 = 全部涨停天数 - 1
+                    const allLimitDays = useStrict_display 
+                        ? (merged.全部涨停天数_严格 || 0) 
+                        : (merged.全部涨停天数_宽松 || 0);
+                    displayTotalLimitUpCount = Math.max(0, allLimitDays - 1);
+                } else {
+                    // 连续涨停：使用原有的总涨停数_天数
+                    displayTotalLimitUpCount = useStrict_display 
+                        ? (merged.总涨停数_天数_严格 !== undefined ? merged.总涨停数_天数_严格 : 0) 
+                        : (merged.总涨停数_天数_宽松 !== undefined ? merged.总涨停数_天数_宽松 : 0);
+                }
+                
+                row.innerHTML = `
+<td>${rowIndex}</td>
+<td>${currentTime}</td>
+<td>${merged.名称 || stockName}</td>
+<td>${stockCode}</td>
+<td>${merged.涨幅 || '-'}</td>
+<td>${merged.昨日涨幅 || '-'}</td>
+<td>${stockConcept || '-'}</td>
+<td>${merged.行业 || '-'}</td>
+<td>${merged.流通市值 || '-'}</td>
+<td>${merged.现价 || '-'}</td>
+<td>${merged.换手率 || '-'}</td>
+<td>${displayLimitUpCount}</td>
+<td>${displayTotalLimitUpCount}</td>
+<td>${useStrict_display ? (merged.离涨停多少天_严格 !== undefined ? merged.离涨停多少天_严格 : '-') : (merged.离涨停多少天_宽松 !== undefined ? merged.离涨停多少天_宽松 : '-')}</td>
+<td>${merged['离30日新高%'] || '0.00'}</td>
+<td>${merged['30日新高次数'] !== undefined ? merged['30日新高次数'] : 0}</td>
+<td>0</td>
+<td>${merged.今天创新高次数 !== undefined ? merged.今天创新高次数 : 0}</td>
+<td>${merged['离60日新高%'] || '0.00'}</td>
+<td>${merged['30日最高价'] || '-'}</td>
+<td>${merged['60日最高价'] || '-'}</td>
+<td>${merged.今日最高价 || '-'}</td>
+<td>${merged.今日最低价 || '-'}</td>
+<td>${merged['离最高价%'] || '0.00'}</td>
+<td>${merged['离最低价%'] || '0.00'}</td>
+<td>${merged.今天创新低次数 !== undefined ? merged.今天创新低次数 : 0}</td>
+`;
+                fragment.appendChild(row);  // 先添加到fragment，不直接添加到DOM
+                applyHighlightIfNeeded(row, stockCode);
+
+// 记录firstRow和lastRow
+                if (conceptRowRanges[stockConcept].firstRow === null) {
+                    conceptRowRanges[stockConcept].firstRow = row;
+                }
+                conceptRowRanges[stockConcept].lastRow = row;
+
+                currentDisplayedStocks.add(stockCode);
+                conceptRowCounts[stockConcept]++;
+                rowIndex++;
+            });
+            
+            // 批量插入所有行（只触发一次重排）
+            stockTableBody.appendChild(fragment);
+
+// 保存映射关系和顺序，延迟启动高度同步
+            window.conceptRowRanges = conceptRowRanges;
+            window.conceptOrder = sortedConcepts.map(([concept]) => concept);
+
+        } else {
+// 概念排序：按概念分组填充
+            for (const [concept, stocks] of sortedConcepts) {
+                conceptRowElements[concept] = [];
+                conceptRowRanges[concept] = { 
+                    firstRow: null, 
+                    lastRow: null,
+                    stockCount: stocks.length  // 直接保存股票数量
+                };
+                const colorIndex = conceptOrderMap[concept];
+                stocks.forEach((stock, stockIndex) => {
+                    const {stockCode, stockName, merged} = stock;
+                    const isLastInConcept = stockIndex === stocks.length - 1;
+                    const row = document.createElement('tr');
+                    if (isLastInConcept) {
+                        if (colorIndex < 5) {
+                            row.className = `concept-last-row-${colorIndex}`;
+                        } else {
+                            row.className = 'concept-last-row-other';
+                        }
+                    }
+                    // 根据股票代码判断使用严格版还是宽松版
+                    // 3开头和68开头用严格版（19.8%），其他用宽松版（9.8%）
+                    const useStrict_display = stockCode.startsWith('3') || stockCode.startsWith('68');
+                    
+                    // 计算显示用的涨停数和总涨停数
+                    const consecutiveCount = useStrict_display 
+                        ? (merged.连续涨停数_严格 || 0) 
+                        : (merged.连续涨停数_宽松 || 0);
+                    const daysFromLimit = useStrict_display 
+                        ? merged.离涨停多少天_严格 
+                        : merged.离涨停多少天_宽松;
+                    
+                    // 判断是否为单日涨停：连续涨停数=0 且 有涨停记录
+                    const isSingleDayLimitUp = (consecutiveCount === 0 && daysFromLimit !== '无涨停');
+                    
+                    // 涨停数显示：单日涨停显示1，连续涨停显示实际天数
+                    const displayLimitUpCount = isSingleDayLimitUp ? 1 : consecutiveCount;
+                    
+                    // 总涨停数显示
+                    let displayTotalLimitUpCount;
+                    if (isSingleDayLimitUp) {
+                        // 单日涨停：总涨停数 = 全部涨停天数 - 1
+                        const allLimitDays = useStrict_display 
+                            ? (merged.全部涨停天数_严格 || 0) 
+                            : (merged.全部涨停天数_宽松 || 0);
+                        displayTotalLimitUpCount = Math.max(0, allLimitDays - 1);
+                    } else {
+                        // 连续涨停：使用原有的总涨停数_天数
+                        displayTotalLimitUpCount = useStrict_display 
+                            ? (merged.总涨停数_天数_严格 !== undefined ? merged.总涨停数_天数_严格 : 0) 
+                            : (merged.总涨停数_天数_宽松 !== undefined ? merged.总涨停数_天数_宽松 : 0);
+                    }
+                    
+                    row.innerHTML = `
+<td>${rowIndex}</td>
+<td>${currentTime}</td>
+<td>${merged.名称 || stockName}</td>
+<td>${stockCode}</td>
+<td>${merged.涨幅 || '-'}</td>
+<td>${merged.昨日涨幅 || '-'}</td>
+<td>${concept || '-'}</td>
+<td>${merged.行业 || '-'}</td>
+<td>${merged.流通市值 || '-'}</td>
+<td>${merged.现价 || '-'}</td>
+<td>${merged.换手率 || '-'}</td>
+<td>${displayLimitUpCount}</td>
+<td>${displayTotalLimitUpCount}</td>
+<td>${useStrict_display ? (merged.离涨停多少天_严格 !== undefined ? merged.离涨停多少天_严格 : '-') : (merged.离涨停多少天_宽松 !== undefined ? merged.离涨停多少天_宽松 : '-')}</td>
+<td>${merged['离30日新高%'] || '0.00'}</td>
+<td>${merged['30日新高次数'] !== undefined ? merged['30日新高次数'] : 0}</td>
+<td>0</td>
+<td>${merged.今天创新高次数 !== undefined ? merged.今天创新高次数 : 0}</td>
+<td>${merged['离60日新高%'] || '0.00'}</td>
+<td>${merged['30日最高价'] || '-'}</td>
+<td>${merged['60日最高价'] || '-'}</td>
+<td>${merged.今日最高价 || '-'}</td>
+<td>${merged.今日最低价 || '-'}</td>
+<td>${merged['离最高价%'] || '0.00'}</td>
+<td>${merged['离最低价%'] || '0.00'}</td>
+<td>${merged.今天创新低次数 !== undefined ? merged.今天创新低次数 : 0}</td>
+`;
+                    fragment.appendChild(row);  // 先添加到fragment，不直接添加到DOM
+                    applyHighlightIfNeeded(row, stockCode);
+                    
+                    conceptRowElements[concept].push(row);
+                    if (conceptRowRanges[concept].firstRow === null) {
+                        conceptRowRanges[concept].firstRow = row;
+                    }
+                    conceptRowRanges[concept].lastRow = row;
+                    currentDisplayedStocks.add(stockCode);
+                    conceptRowCounts[concept]++;
+                    rowIndex++;
+                });
+            }
+            
+            // 批量插入所有行（只触发一次重排）
+            stockTableBody.appendChild(fragment);
+        }
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const rightTableRows = document.querySelectorAll('#stockTable tbody tr')
+                const rowHeight = rightTableRows.length > 0 ? rightTableRows[0].offsetHeight : 33
+                const conceptTableBody = document.getElementById('conceptTableBody')
+
+// 判断当前渲染模式
+                const currentMode = (currentSort.column && currentSort.direction) ? 'custom' : 'concept';
+                console.log(`概念表格渲染模式: ${currentMode}`);
+
+                if (currentMode === 'custom') {
+                    // ========== 自定义排序模式：显示全部概念，按涨停数降序 ==========
+                    const allConcepts = [];
+
+                    // 从后端数据获取所有概念及其涨停数
+                    if (window.conceptCount) {
+                        for (const [concept, count] of Object.entries(window.conceptCount)) {
+                            if (concept !== '其他') {
+                                const todayCount = (window.todayLimitUp && window.todayLimitUp[concept]) || 0;
+                                allConcepts.push({
+                                    concept: concept,
+                                    count: count,
+                                    todayCount: todayCount
+                                });
+                            }
+                        }
+                    }
+
+                    // 先按今日涨停数降序，再按涨停数降序
+                    allConcepts.sort((a, b) => {
+                        if (b.todayCount !== a.todayCount) {
+                            return b.todayCount - a.todayCount
+                        }
+                        return b.count - a.count
+                    });
+
+                    console.log(`自定义排序模式 - 概念数量: ${allConcepts.length}`);
+
+                    // 强制每次都重新渲染左侧表格
+                    if (allConcepts.length > 0) {
+                        conceptTableBody.innerHTML = '';
+
+                        // 填充左侧表格（普通行高，不需要对齐右侧）
+                        allConcepts.forEach(({concept, count, todayCount}) => {
+                            const conceptRow = document.createElement('tr');
+                            conceptRow.innerHTML = `
+                <td>${concept}</td>
+                <td>${count}</td>
+                <td>${todayCount}</td>
+            `;
+                            conceptTableBody.appendChild(conceptRow);
+                        });
+                        console.log(`已填充 ${allConcepts.length} 个概念到左侧表格`);
+                    } else {
+                        console.warn('自定义排序模式：没有概念数据可显示');
+                    }
+
+                } else {
+                    // ========== 概念排序模式：左右对齐，底部对齐，前5个有颜色 ==========
+                    console.log(`渲染概念表格（概念排序模式）`);
+
+                    if (sortedConcepts.length > 0) {
+                        // 统计&排序后得到的概念顺序
+                        const newConceptOrder = sortedConcepts.map(([concept]) => concept);
+
+                        // —— 新增：仅当顺序变化时才重渲左表 ——
+                        if (!window._lastConceptOrder 
+                            || window._lastConceptOrder.length !== newConceptOrder.length
+                            || newConceptOrder.some((c,i) => c !== window._lastConceptOrder[i])) {
+                            
+                        conceptTableBody.innerHTML = '';
+
+                        sortedConcepts.forEach(([concept, stocks], index) => {
+                            const conceptRow = document.createElement('tr');
+                            const colorClass = index < 5 ? `concept-last-row-${index}` : 'concept-last-row-other';
+                            conceptRow.className = colorClass;
+
+                            let count = 0;
+                            let todayCount = 0;
+                            if (concept === '其他') {
+                                count = 0;
+                                todayCount = 0;
+                            } else {
+                                count = backendConceptCount[concept] || 0;
+                                todayCount = (window.todayLimitUp && window.todayLimitUp[concept]) || 0;
+                            }
+
+                            // 底部对齐
+                            conceptRow.innerHTML = `
+                <td style="vertical-align: bottom;">${concept}</td>
+                <td style="vertical-align: bottom;">${count}</td>
+                <td style="vertical-align: bottom;">${todayCount}</td>
+            `;
+
+                            conceptTableBody.appendChild(conceptRow);
+                        });
+                        console.log(`已填充 ${sortedConcepts.length} 个概念到左侧表格`);
+                            window._lastConceptOrder = newConceptOrder;
+                        }
+
+                        // 保存映射关系和顺序，延迟启动高度同步
+                        window.conceptRowRanges = conceptRowRanges;
+                        window.conceptOrder = sortedConcepts.map(([concept]) => concept);
+
+                        // 注释掉旧的setTimeout手动同步代码，避免与ResizeObserver冲突
+                        // 现在完全依赖ResizeObserver进行高度同步
+                        /*
+                        setTimeout(() => {
+                            const conceptRows = conceptTableBody.querySelectorAll('tr');
+                            const colorNames = ['红色', '蓝色', '黄色', '绿色', '黑色'];
+                            window.conceptOrder.forEach((concept, index) => {
+                                if (index >= conceptRows.length) return;
+                                const conceptRow = conceptRows[index];
+                                const range = conceptRowRanges[concept];
+                                if (!range || !range.firstRow || !range.lastRow) return;
+                                try {
+                                    // 精确计算右侧该概念组的总高度（包含所有边框）
+                                    const firstRect = range.firstRow.getBoundingClientRect();
+                                    const lastRect = range.lastRow.getBoundingClientRect();
+                                    const rightTotalHeight = Math.round(lastRect.bottom - firstRect.top);
+
+                                    // 获取应用高度前的左侧高度
+                                    const leftBeforeHeight = conceptRow.offsetHeight;
+
+                                    // 直接应用右侧计算的高度到左侧
+                                    conceptRow.style.height = `${rightTotalHeight}px`;
+                                    conceptRow.style.minHeight = `${rightTotalHeight}px`;
+
+                                    const cells = conceptRow.querySelectorAll('td');
+                                    cells.forEach(cell => {
+                                        cell.style.height = `${rightTotalHeight}px`;
+                                        cell.style.minHeight = `${rightTotalHeight}px`;
+                                    });
+
+                                    // 获取应用高度后的左侧高度
+                                    const leftAfterHeight = conceptRow.offsetHeight;
+
+                                    // 根据索引确定颜色名称
+                                    const colorName = index < 5 ? colorNames[index] : '灰色';
+
+                                    // 获取 firstRow 和 lastRow 的内容（股票代码和名称）
+                                    const firstRowCells = range.firstRow.querySelectorAll('td');
+                                    const lastRowCells = range.lastRow.querySelectorAll('td');
+                                    const firstRowContent = firstRowCells.length >= 4 ? `${firstRowCells[2].textContent} ${firstRowCells[3].textContent}` : '未知';
+                                    const lastRowContent = lastRowCells.length >= 4 ? `${lastRowCells[2].textContent} ${lastRowCells[3].textContent}` : '未知';
+
+                                    // 从 sortedConcepts 中获取该概念的股票数
+                                    const conceptStocks = sortedConcepts.find(([c]) => c === concept);
+                                    const stockCount = conceptStocks ? conceptStocks[1].length : 0;
+
+                                    // 打印详细调试信息
+                                    console.log(`【${concept}】(${colorName}线)`);
+                                    console.log(`  firstRow内容: ${firstRowContent}`);
+                                    console.log(`  lastRow内容: ${lastRowContent}`);
+                                    console.log(`  ${concept}股票数: ${stockCount}`);
+                                    console.log(`  firstRect.top值: ${Math.round(firstRect.top)}px`);
+                                    console.log(`  lastRect.bottom值: ${Math.round(lastRect.bottom)}px`);
+                                    console.log(`  高度差值: ${rightTotalHeight}px`);
+                                    console.log(`  左侧高度: ${leftAfterHeight}px`);
+                                } catch (e) {
+                                    console.error(`计算${concept}高度失败:`, e);
+                                }
+                            });
+                        }, 800);
+                        */
+                    } else {
+                        console.warn('概念排序模式：没有概念数据可显示');
+                    }
+                }
+// 只在首次渲染时设置滚动同步
+                if (!window.scrollSyncInitialized) {
+                    const conceptContainer = document.querySelector('.concept-table-container')
+                    const stockContainer = document.querySelector('.stock-table-container')
+                    if (conceptContainer && stockContainer) {
+                        let isSyncing = false
+                        let scrollTimeout1, scrollTimeout2
+
+// 移除旧的事件监听器（如果存在）
+                        if (window.syncConceptScroll) {
+                            conceptContainer.removeEventListener('scroll', window.syncConceptScroll)
+                        }
+                        if (window.syncStockScroll) {
+                            stockContainer.removeEventListener('scroll', window.syncStockScroll)
+                        }
+
+                        window.syncConceptScroll = function() {
+                            conceptContainer._isScrolling = true
+                            clearTimeout(scrollTimeout1)
+                            scrollTimeout1 = setTimeout(() => {
+                                conceptContainer._isScrolling = false
+                            }, 150)
+                            if (!isSyncing) {
+                                isSyncing = true
+                                stockContainer.scrollTop = conceptContainer.scrollTop
+                                setTimeout(() => { isSyncing = false }, 0)
+                            }
+                            
+                            // 移除滚动时的高度同步，只同步滚动位置
+                            // 高度已经在数据更新时同步过了，滚动时不需要重新同步
+                        }
+                        window.syncStockScroll = function() {
+                            stockContainer._isScrolling = true
+                            clearTimeout(scrollTimeout2)
+                            scrollTimeout2 = setTimeout(() => {
+                                stockContainer._isScrolling = false
+                            }, 150)
+                            if (!isSyncing) {
+                                isSyncing = true
+                                conceptContainer.scrollTop = stockContainer.scrollTop
+                                setTimeout(() => { isSyncing = false }, 0)
+                            }
+                            
+                            // 移除滚动时的高度同步，只同步滚动位置
+                            // 高度已经在数据更新时同步过了，滚动时不需要重新同步
+                        }
+                        conceptContainer.addEventListener('scroll', window.syncConceptScroll, {passive: true})
+                        stockContainer.addEventListener('scroll', window.syncStockScroll, {passive: true})
+                        window.scrollSyncInitialized = true
+                    }
+                }
+            })
+        })
+        
+// === 生成本轮快照（刚刚已在函数最前面拿了 prevSnapshot，这里再采当前） ===
+        const currSnapshot = takeStockSnapshot();
+
+// === 计算消失 & 新增 ===
+        const { disappeared, newStocks } = compareSnapshots(prevSnapshot, currSnapshot);
+
+// 1) 更新"消失股票"展示
+        if (disappeared.length > 0) {
+            displayDisappearedStocks(disappeared);
+        }
+
+// 2) 新增股票的高亮 + 声音规则
+        const nowTs = Date.now();
+        let shouldPlay = false;
+        const duration = getSoundDuration();
+
+        newStocks.forEach(s => {
+            const code = s.code;
+            // 行高亮 - 根据筛选条件变化决定时长
+            const highlightDuration = filterChanged ? 3000 : 10000;  // 筛选改变用3秒，否则用10秒
+            highlightNewStock(code, highlightDuration);
+            const row = document.getElementById('stockTableBody');
+            if (row) {
+                const rows = row.querySelectorAll('tr');
+                    rows.forEach(r => {
+                    const codeCell = r.querySelector('td:nth-child(4)'); // 代码现在在第4列
+                        if (codeCell && codeCell.textContent.trim() === String(code)) {
+                            r.classList.add('new-stock-highlight');
+                        }
+                });
+            }
+
+            // 读取今天创新高次数（用于"破新高例外"判定）
+            const md = window.mergedData && window.mergedData[code];
+            const currentHighCount = md ? (md.今天创新高次数 || 0) : 0;
+
+            // 最近一次响铃记录
+            const rec = lastSeen.get(code);
+            if (!rec) {
+                // 从未提醒过：允许响，记录当前创新高次数
+                shouldPlay = true;
+                lastSeen.set(code, { ts: nowTs, lastHighCount: currentHighCount });
+            } else {
+                const minutes = (nowTs - rec.ts) / 60000;
+                // 判断是否增加了创新高次数（新的次数 > 第一次记录的次数）
+                const brokeNewHigh = currentHighCount > (rec.lastHighCount || 0);
+
+                if (brokeNewHigh) {
+                    // 突破了新的创新高次数：无视静音，允许响
+                    shouldPlay = true;
+                    lastSeen.set(code, { ts: nowTs, lastHighCount: currentHighCount });
+                } else if (minutes >= muteMinutes) {
+                    // 超过静音窗口：允许响
+                    shouldPlay = true;
+                    lastSeen.set(code, { ts: nowTs, lastHighCount: currentHighCount });
+                } else {
+                    // 仍在静音窗口且没破新高次数：不响，但更新 lastHighCount（以防后续破新高能触发）
+                    lastSeen.set(code, { ts: rec.ts, lastHighCount: Math.max(rec.lastHighCount || 0, currentHighCount) });
+                }
+            }
+        });
+
+// 2.1) 新增：检测已有股票的创新高次数是否增加
+        currSnapshot.forEach((data, code) => {
+            // 如果股票在上一轮也存在（不是新增股票）
+            if (prevSnapshot.has(code)) {
+                const md = window.mergedData && window.mergedData[code];
+                if (md) {
+                    const currentHighCount = md.今天创新高次数 || 0;
+                    const rec = lastSeen.get(code);
+                    
+                    // 检查创新高次数是否增加
+                    if (rec && currentHighCount > (rec.lastHighCount || 0)) {
+                        console.log(`[调试] 已有股票突破新高: ${code}, 创新高次数从${rec.lastHighCount}增加到${currentHighCount}`);
+                        
+                        // 新增：添加背景色高亮
+                        const highlightDuration = filterChanged ? 3000 : 10000;
+                        highlightNewStock(code, highlightDuration);
+                        
+                        // 添加背景色样式到DOM
+                        const row = document.getElementById('stockTableBody');
+                        if (row) {
+                            const rows = row.querySelectorAll('tr');
+                            rows.forEach(r => {
+                                const codeCell = r.querySelector('td:nth-child(4)');
+                                if (codeCell && codeCell.textContent.trim() === String(code)) {
+                                    r.classList.add('new-stock-highlight');
+                                }
+                            });
+                        }
+                        
+                        // 更新lastSeen记录
+                        lastSeen.set(code, { ts: nowTs, lastHighCount: currentHighCount });
+                        
+                        // 触发声音提醒
+                        shouldPlay = true;
+                    }
+                }
+            }
+        });
+
+// 3) 首次加载：保留原有首次响一声
+        if (isFirstLoad && currSnapshot.size > 0) {
+            playAlert(duration);
+            isFirstLoad = false;
+        } else if (shouldPlay) {
+            playAlert(duration);
+        }
+
+// 用于下一轮比对的"上一轮快照"
+        lastSnapshot = currSnapshot;
+        displayedStocks = new Set([...currSnapshot.keys()]);
+        console.log(`=== fillStockTable完成 ===`)
+        console.log(`筛选后显示 ${rowIndex - 1} 只股票`)
+        
+// 应用表格着色
+        colorizeRightTable();
+        
+// ========== 表格更新完成后再延迟启动高度同步，确保DOM完全渲染稳定 ==========
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // 延迟启动高度同步，让浏览器完成布局计算
+                setTimeout(() => {
+                    startHeightSync();
+                }, 200);  // 增加到200ms，确保表格完全渲染完成
+            });
+        });
+        
+// 检查601212的详细信息
+        if (window.mergedData && window.mergedData['601212']) {
+            const stock601212 = window.mergedData['601212'];
+            console.log('\n=== 601212 详细调试信息 ===');
+            console.log('离涨停多少天:', stock601212.离涨停多少天);
+            console.log('连续涨停数:', stock601212.连续涨停数);
+// 查找601212在conceptData中的所有涨停日期
+            const limitUpDates = [];
+            for (const [date, stocksList] of Object.entries(window.conceptData)) {
+                for (const stockData of stocksList) {
+                    if (stockData[0] === '601212') {
+                        limitUpDates.push(date);
+                    }
+                }
+            }
+            console.log('601212涨停日期列表:', limitUpDates.sort());
+// 找出历史数据最新日期
+            const allDates = Object.keys(window.conceptData).sort((a, b) => {
+                const parseDate = (d) => {
+                    const match = d.match(/(\d+)月(\d+)/);
+                    return new Date(2025, parseInt(match[1])-1, parseInt(match[2]));
+                };
+                return parseDate(b) - parseDate(a);
+            });
+            console.log('历史数据最新日期:', allDates[0]);
+            console.log('历史数据日期范围:', allDates[allDates.length-1], '到', allDates[0]);
+            console.log('=== 601212 调试信息结束 ===\n');
+        }
+    }
+    // 获取当前表格中显示的所有股票代码
+    function getCurrentDisplayedStocks() {
+        const tbody = document.getElementById('stockTableBody');
+        if (!tbody) return [];
+        const codes = [];
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const codeCell = row.querySelector('td:nth-child(4)');
+            if (codeCell) {
+                const code = codeCell.textContent.trim();
+                if (code) codes.push(code);
+            }
+        });
+        console.log(`[优先爬取] 当前表格显示 ${codes.length} 个股票`);
+        return codes;
+    }
+    window.getCurrentDisplayedStocks = getCurrentDisplayedStocks;
+    // 音频开关按钮事件（页面加载完立即绑定）
+    document.addEventListener('DOMContentLoaded', function() {
+        const audioToggle = document.getElementById('audioToggle')
+        const audioIcon = document.getElementById('audioIcon')
+        if (audioToggle && audioIcon) {
+            audioToggle.addEventListener('click', function() {
+                audioEnabled = !audioEnabled
+                if (audioEnabled) {
+                    audioIcon.src = 'image/声音.png'
+                    console.log('音频已开启')
+                } else {
+                    audioIcon.src = 'image/声音关闭.png'
+                    console.log('音频已关闭')
+                    const audio = document.getElementById('alertSound')
+                    if (audio) {
+                        audio.pause()
+                        audio.currentTime = 0
+                    }
+                    if (audioTimeout) {
+                        clearTimeout(audioTimeout)
+                    }
+                }
+            })
+        }
+    })
+    window.addEventListener('pywebviewready',function (){
+        pywebview.api.get_concept_data().then(function (result) {
+            console.log('概念数据加载完成：', result)
+            window.conceptData = result
+        }).catch(function (error) {
+            console.error('概念数据加载失败：', error)
+        })
+        const end_button=document.querySelector(".end_button")
+        end_button.addEventListener('click',function (){
+            stopTimeUpdateTimer()
+            console.log('程序已停止')
+        })
+        const start_button=document.querySelector(".start_button")
+        start_button.addEventListener('click',function (){
+            const previewValue = parseInt(document.querySelector(".preview").value) || 3
+            const backValue = parseInt(document.querySelector(".back").value) || 21
+            console.log(`使用参数：strat_index=${previewValue}, count=${backValue}`)
+            startTimeUpdateTimer()
+            start_button.disabled=true
+            start_button.style.opacity='0.5'
+            start_button.style.cursor = 'not-allowed'
+            pywebview.api.get_real_time_data(previewValue, backValue).then(function (result) {
+                console.log('概念数据（完整）:', result.概念数据)
+                console.log('实时数据获取完成（完整）:', result.实时数据)
+                const conceptData = result.概念数据
+                const realTimeData = result.实时数据
+                window.conceptData = conceptData
+                window.realTimeData = realTimeData
+                // 删除前端统计逻辑，改为调用后端API（使用严格标准：300/688需19.8%，其他9.8%）
+                return pywebview.api.get_today_limit_up_count()
+            }).then(function (todayLimitUp) {
+                console.log('今日涨停统计（后端返回）:', todayLimitUp)
+                window.todayLimitUp = todayLimitUp || {}
+                return pywebview.api.get_history_data(previewValue, backValue)
+            }).then(function (historyResult) {
+                console.log('历史数据获取完成（完整）:', historyResult)
+                return pywebview.api.get_concept_count()
+            }).then(function (conceptCount) {
+                console.log('每个概念的涨停数（排除其他）：', conceptCount)
+                window.conceptCount = conceptCount
+                const tbody = document.getElementById('conceptTableBody')
+                tbody.innerHTML = ''
+                const sortedConcepts = Object.entries(conceptCount).sort((a, b) => {
+                    const todayCountA = window.todayLimitUp[a[0]] || 0
+                    const todayCountB = window.todayLimitUp[b[0]] || 0
+                    if (todayCountB !== todayCountA) {
+                        return todayCountB - todayCountA
+                    }
+                    return b[1] - a[1]
+                })
+                for (const [concept, count] of sortedConcepts) {
+                    const todayCount = window.todayLimitUp[concept] || 0
+                    const row = document.createElement('tr')
+                    row.innerHTML = `<td>${concept}</td><td>${count}</td><td>${todayCount}</td>`
+                    tbody.appendChild(row)
+                }
+                return pywebview.api.get_merged_data(previewValue, backValue)
+            }).then(function (mergedData) {
+                console.log('整合后的数据（完整）：', mergedData)
+                const sampleKeys = Object.keys(mergedData).slice(0, 3)
+                console.log('数据样本（前3个股票）：')
+                sampleKeys.forEach(key => {
+                    console.log(`  ${key}:`, mergedData[key])
+                })
+                window.mergedData = mergedData
+                window.realTimeData = window.realTimeData || {}
+                fillStockTable()
+                hideProgress()
+// 启动后端自动更新
+                const interval = parseInt(document.querySelector('.scrapt_time').value) || 5
+                pywebview.api.start_auto_update(interval).then(function(result) {
+                    autoUpdateRunning = true;
+                    console.log('后端自动更新已启动（开始按钮）:', result);
+                }).catch(function(error) {
+                    console.error('启动后端自动更新失败:', error);
+                })
+                const upCheck = document.querySelector('.up_check')
+                const upToInput = document.querySelector('.up_to')
+                upCheck.addEventListener('change', function() {
+                    if (window.mergedData) {
+                        fillStockTable()
+                    }
+                })
+                upToInput.addEventListener('input', function() {
+                    if (upCheck.checked && window.mergedData) {
+                        fillStockTable()
+                    }
+                })
+                const todayHighCheck = document.querySelector('.today_high_check')
+                const highCountCheck = document.querySelector('.high_count_check')
+                const highCountInput = document.querySelector('.high_count_input')
+                const lowCheck = document.querySelector('.low_check')
+                const lowCountCheck = document.querySelector('.low_count_check')
+                const lowCountInput = document.querySelector('.low_count_input')
+                todayHighCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                highCountCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                highCountInput.addEventListener('input', function() {
+                    if (highCountCheck.checked && window.mergedData) fillStockTable()
+                })
+                lowCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                lowCountCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                lowCountInput.addEventListener('input', function() {
+                    if (lowCountCheck.checked && window.mergedData) fillStockTable()
+                })
+                const everUpCheck = document.querySelector('.ever_up_check')
+                const everUpInput = document.querySelector('.ever_up_input')
+                everUpCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                everUpInput.addEventListener('input', function() {
+                    if (everUpCheck.checked && window.mergedData) fillStockTable()
+                })
+                const break30Check = document.querySelector('.break_30_check')
+                const break30Input = document.querySelector('.break_30_input')
+                const break30CountCheck = document.querySelector('.break_30_count_check')
+                const break30CountInput = document.querySelector('.break_30_count_input')
+                const break60Check = document.querySelector('.break_60_check')
+                break30Check.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                break30Input.addEventListener('input', function() {
+                    if (break30Check.checked && window.mergedData) fillStockTable()
+                })
+                break30CountCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                break30CountInput.addEventListener('input', function() {
+                    if (break30CountCheck.checked && window.mergedData) fillStockTable()
+                })
+                break60Check.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                const limitUpGte2Check = document.querySelector('.limit_up_gte2_check')
+                const limitUpGte2Input = document.querySelector('.limit_up_gte2_input')
+                limitUpGte2Check.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                limitUpGte2Input.addEventListener('input', function() {
+                    if (limitUpGte2Check.checked && window.mergedData) fillStockTable()
+                })
+                const limitUp2Check = document.querySelector('.limit_up_2_check')
+                const limitUp2Input = document.querySelector('.limit_up_2_input')
+                limitUp2Check.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                limitUp2Input.addEventListener('input', function() {
+                    if (limitUp2Check.checked && window.mergedData) fillStockTable()
+                })
+                const sunDayCheck = document.querySelector('.checkbox')
+                const sunDayInput = document.querySelector('.sun_day')
+                sunDayCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                sunDayInput.addEventListener('input', function() {
+                    if (sunDayCheck.checked && window.mergedData) fillStockTable()
+                })
+                const totalLimitUpCheck = document.querySelector('.total-limit-up-check')
+                const totalLimitUpInput = document.querySelector('.total-limit-up-input')
+                totalLimitUpCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                totalLimitUpInput.addEventListener('input', function() {
+                    if (totalLimitUpCheck.checked && window.mergedData) fillStockTable()
+                })
+                const yesterdayNegativeCheck = document.querySelector('.yesterday-negative-check')
+                yesterdayNegativeCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                const prevDaysPositiveCheck = document.querySelector('.prev-days-positive-check')
+                const prevDaysPositiveInput = document.querySelector('.prev-days-positive-input')
+                prevDaysPositiveCheck.addEventListener('change', function() {
+                    if (window.mergedData) fillStockTable()
+                })
+                prevDaysPositiveInput.addEventListener('input', function() {
+                    if (prevDaysPositiveCheck.checked && window.mergedData) fillStockTable()
+                })
+                const scrapTimeInput = document.querySelector('.scrapt_time')
+                scrapTimeInput.addEventListener('change', function() {
+                    if (timeUpdateInterval) {
+                        console.log('爬取间隔已改变，重启时间定时器')
+                        startTimeUpdateTimer()
+                    }
+                })
+                
+                // 参数变化监听器：当 preview 或 back 参数改变时，重新获取数据
+                const previewInput = document.querySelector('.preview');
+                const backInput = document.querySelector('.back');
+                let paramUpdateTimer = null;
+                
+                function handleParamChange() {
+                    // 防抖：等待用户输入完成
+                    if (paramUpdateTimer) clearTimeout(paramUpdateTimer);
+                    
+                    paramUpdateTimer = setTimeout(() => {
+                        if (window.mergedData) {
+                            console.log('参数已修改，重新获取数据...');
+                            const previewValue = parseInt(previewInput.value) || 3;
+                            const backValue = parseInt(backInput.value) || 21;
+                            console.log(`使用新参数：preview=${previewValue}, back=${backValue}`);
+                            
+                            // 显示进度条
+                            updateProgress(0, 100, '参数修改后重新获取数据...');
+                            
+                            // 重新获取数据
+                            pywebview.api.get_real_time_data(previewValue, backValue).then(function (result) {
+                                console.log('实时数据获取完成（参数修改后）:', result);
+                                window.conceptData = result.概念数据;
+                                window.realTimeData = result.实时数据;
+                                return pywebview.api.get_today_limit_up_count();
+                            }).then(function (todayLimitUp) {
+                                console.log('今日涨停统计（参数修改后）:', todayLimitUp);
+                                window.todayLimitUp = todayLimitUp || {};
+                                return pywebview.api.get_history_data(previewValue, backValue);
+                            }).then(function (historyResult) {
+                                console.log('历史数据获取完成（参数修改后）:', historyResult);
+                                return pywebview.api.get_concept_count();
+                            }).then(function (conceptCount) {
+                                console.log('概念涨停数统计（参数修改后）:', conceptCount);
+                                window.conceptCount = conceptCount;
+                                return pywebview.api.get_merged_data(previewValue, backValue);
+                            }).then(function (mergedData) {
+                                console.log('整合数据完成（参数修改后）:', mergedData);
+                                window.mergedData = mergedData;
+                                fillStockTable();
+                                hideProgress();
+                                console.log('参数修改后数据已更新');
+                            }).catch(function (error) {
+                                console.error('参数修改后数据更新失败:', error);
+                                hideProgress();
+                            });
+                        }
+                    }, 1000); // 等待1秒，确保用户输入完成
+                }
+                
+                previewInput.addEventListener('input', handleParamChange);
+                backInput.addEventListener('input', handleParamChange);
+                
+// 按概念排序按钮
+                const sortByConceptBtn = document.querySelector('.sort_by_concept_btn')
+                if (sortByConceptBtn) {
+                    sortByConceptBtn.addEventListener('click', sortByConcept)
+                }
+// 表头排序点击事件
+                document.querySelectorAll('.stock-table th.sortable').forEach(th => {
+                    th.addEventListener('click', function() {
+                        const column = this.getAttribute('data-column')
+                        sortTable(column)
+                    })
+                })
+            }).catch(function (error) {
+                console.error('获取数据失败：',error)
+                hideProgress()
+            }).finally(function() {
+                start_button.disabled = false
+                start_button.style.opacity = '1'
+                start_button.style.cursor = 'pointer'
+            })
+        })
+    })
+</script>
+</html>
